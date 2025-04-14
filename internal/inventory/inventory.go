@@ -3,7 +3,11 @@ package inventory
 import (
 	"errors"
 	"fmt"
+	"log/slog"
+	"os"
 )
+
+var logger = slog.New(slog.NewJSONHandler(os.Stdout, nil))
 
 // Item represents a product in the warehouse
 type Item struct {
@@ -30,12 +34,17 @@ func NewInventoryService() *InventoryService {
 
 // CheckStock verifies the stock
 func (s *InventoryService) CheckStock(id string) (Item, error) {
+	logger.Info("Checking stock", "product_id", id)
 	item, exists := s.items[id]
 	if !exists {
+		logger.Error("Product not found", "product_id", id)
 		return Item{}, errors.New("product not found")
 	}
 	if item.Quantity < 10 {
+		logger.Warn("Low stock detected", "product_id", id, "quantity", item.Quantity)
 		fmt.Printf("⚠️ Warning: Low stock for %s (Quantity: %d)\n", item.Name, item.Quantity)
+	} else {
+		logger.Info("Stock sufficient", "product_id", id, "quantity", item.Quantity)
 	}
 	return item, nil
 }
